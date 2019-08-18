@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.music.dao.CommentsDao">
+	<resultMap id="BaseResultMap" type="com.music.bean.Comments">
+
+		<id column="commentid" property="commentsId" />
+
+		<result column="comcontent" property="commentsContent" />
+
+		<result column="contenttime" property="commentsTime" />
+
+		<result column="count" property="greatCount" />
+
+		<result column="USERID" property="userid" />
+
+		<result column="SONGID" property="songid" />
+
+		<result column="REMARK" property="remark" />
+		
+		<!--用户的外键关系  -->
+		<association property="users" column="userid" javaType="com.music.bean.Users">
+			<id property="userId" column="id"/>
+			<result property="picture" column="userpicture"/>
+			<result property="username" column="username"/>
+		</association>
+		
+		<!--回复评论的外键关系  -->
+		<collection property="replyCommentList" ofType="com.music.bean.ReplyComment">
+		
+			<id column="rId" property="rId" />
+			<result column="rcContent" property="rContent"/>
+			<!--回复评论中的用户的外键关系  -->
+			<association property="users" column="userid" javaType="com.music.bean.Users">
+				<id property="usersId" column="replyuserid"/>
+				<result property="username" column="rcUserName"/>
+			</association>
+			
+		</collection>
+	</resultMap>
+
+	<!-- 定义sql片段，替代* -->
+	<sql id="Base_Column_List">
+		ID, CONTENT, TIME, COUNT, USERID, SONGID, REMARK
+	</sql>
+
+	
+
+
+	<!-- 根据歌曲查询出歌曲对应的评论 -->
+	<select id="getCommentsBySong" parameterType="int" resultMap="BaseResultMap">
+   		select 
+   			cu.* , 
+   			rc.* 
+   		from
+     (select r.id rId , r.content rcContent , r.time rcTime , r.commentsid rCommentsId ,u1.id replyuserid,  u1.username rcUserName , u1.picture rcUserPicture 
+          from reply_comment r,users u1 
+          where r.userid = u1.id) rc ,
+    (select c.id commentid , c.content comcontent , c.time contenttime , c.count count , u.username username , u.picture userpicture 
+        from comments c , users u 
+        where u.id = c.userid
+         and songId = #{songid}) cu
+    where cu.commentid = rc.rCommentsId
+
+	</select>
+	
+	
+	<!--点赞事件 -->
+	<update id="doThumbs">
+		update comments set count = (count+1) where id = #{id} 
+	</update>
+	
+	<!--回复评论事件  -->
+	<insert id = "repComment" parameterType="com.music.bean.ReplyComment">
+		insert into reply_comment(id,content,time,commentsid,usersid) values(null,#{rContent},#{rTime},#{commentsid},#{usersid})
+	</insert>
+	
+	<!-- 插入评论 -->
+	<insert id ="insertComments" parameterType="com.music.bean.Comments" >
+		insert into comments values(null,#{commentsContent},#{commentsTime},0,#{userid},#{songid},'')
+	</insert>
+	
+
+</mapper>

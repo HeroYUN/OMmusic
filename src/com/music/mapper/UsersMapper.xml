@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.music.dao.UsersDao">
+	<resultMap id="BaseResultMap" type="com.music.bean.Users">
+		<id column="ID" property="usersId" />
+		<result column="USERNAME" property="username" />
+		<result column="PASSWORD" property="password" />
+		<result column="ROLE" property="role" />
+		<result column="TIME" property="registerTime" />
+		<result column="PICTURE" property="picture" />
+		<result column="REMARK" property="remark" />
+		<result column="TEL" property="tel" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		ID, USERNAME, PASSWORD, ROLE, TIME, PICTURE, REMARK, TEL
+	</sql>
+	
+	
+	
+	<insert id="insertUsers" parameterType="com.music.bean.Users">
+		insert into(id,username.password,role,time,picture,remark,tel) users values(null,#{username},#{password},1,#{registerTime},#{picture},#{remark},#{tel})
+	</insert>
+	
+	
+	<select id="selectMobile" resultType="java.lang.String">
+		select 
+			tel 
+		from users
+	</select>
+	
+	<select id="loginVerify" parameterType="java.lang.String" resultMap="BaseResultMap">
+		select * 
+		from users 
+		where tel = #{tel} 
+	</select>
+	
+	
+</mapper>

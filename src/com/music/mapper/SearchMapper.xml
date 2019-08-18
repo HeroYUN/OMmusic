@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.music.dao.SearchDao">
+	<resultMap id="BaseResultMap" type="com.music.bean.Search">
+		<id column="ID" property="searchId" />
+		<result column="CONTENT" property="searchContent" />
+		<result column="COUNT" property="searchCount" />
+		<result column="REMARK" property="remark" />
+	</resultMap>
+	<!-- 定义sql片段，替代* -->
+	<sql id="Base_Column_List">
+		ID, CONTENT, COUNT, REMARK
+	</sql>
+	
+	<select id="getOneSearchByLike"
+		parameterType="com.music.bean.Search" resultMap="BaseResultMap">
+		select * from search where content = #{searchContent}
+	</select>
+	
+	<update id="updateSearchOfCount" parameterType="com.music.bean.Search">
+		update search set count=#{searchCount} where id=#{searchId} 
+	
+	</update>
+	<insert id="addNewSearch" parameterType="com.music.bean.Search">
+		insert into search (content,count) values (#{searchContent},#{searchCount})
+		
+	</insert>
+	
+	<select id="getHotSearch" resultMap="BaseResultMap">
+		select 
+			s.id,
+			s.content,
+			s.count,
+			s.remark 
+		from( 
+			select <include refid="Base_Column_List"/> 
+			from search 
+			order by count desc, id ) s
+		where 1 = 1
+		limit 0,10
+	</select>
+	
+	
+</mapper>

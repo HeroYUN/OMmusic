@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.music.dao.SongDao">
+	<resultMap id="BaseResultMap" type="com.music.bean.Song">
+		<id column="ID" property="songId" />
+
+		<result column="NAME" property="songName" />
+
+		<result column="TIME" property="releaseTime" />
+
+		<result column="LYRIC" property="lyric" />
+
+		<result column="MP3" property="mp3" />
+
+		<result column="COUNT" property="playCount" />
+
+		<result column="DURATION" property="duration" />
+
+		<result column="SINGERID" property="singerid" />
+
+		<result column="SONG_TYPEID" property="songTypeid" />
+
+		<result column="REMARK" property="remark" />
+
+		<association property="singer" column="singerid" javaType="com.music.bean.Singer">
+			<id column="singerId" property="singerId" />
+			
+			<result column="singerName" property="singerName" />
+			<result column="picture" property="picture" />
+		</association>
+	</resultMap>
+	
+	<resultMap id="View_AllMessageMap" type="com.music.bean.View_AllMessage">
+		<id column="SONGID" property="songid" />
+
+		<result column="SONGNAME" property="songname" />
+
+		<result column="UPTIME" property="uptime" />
+
+		<result column="SONGCOUNT" property="songcount" />
+
+		<result column="SONGTIME" property="songtime" />
+
+		<result column="SINGERID" property="singerid" />
+
+		<result column="SINGERNAME" property="singername" />
+
+		<result column="PICTURE" property="picture" />
+
+		<result column="SINGERTYPEID" property="singertypeid" />
+
+		<result column="SINGERTYPENAME" property="singertypename" />
+		
+		<result column="SONGTYPEID" property="songtypeid" />
+		
+		<result column="SONGTYPENAME" property="songtypename" />
+		
+		<association property="song" column="songid" javaType="com.music.bean.Song">
+			
+			<!-- <id column="ID" property="songId" /> -->
+			
+			<result column="lyric" property="lyric" />
+			
+			<result column="mp3" property="mp3" />
+			
+		</association>
+	</resultMap>
+	
+
+
+	<sql id="Base_Column_List">
+		ID, NAME, TIME, LYRIC, MP3, COUNT, DURATION, SINGERID,
+		SONG_TYPEID,
+		REMARK
+	</sql>
+	
+	<!-- 根据歌曲编号获取歌手和歌曲信息 -->	
+	<select id="getOneSong" parameterType="int" resultMap="BaseResultMap">
+		SELECT 
+			so.*,
+			si.ID singerId,
+			si.name singerName,
+			si.picture 
+		FROM song so
+		JOIN singer si ON so.singerid = si.id
+		AND so.id = #{id}
+	</select>
+
+	<!-- 根据传入的歌手信息 更新播放次数 2018年11月28日 23:09:04 贺南彬-->
+	<update id="updateSong" parameterType="com.music.bean.Song">
+		update SONG set 
+			count = #{playCount}+1 
+		where ID = #{songId}
+	</update>
+
+
+
+
+
+
+	<select id="searchSongById" parameterType="com.music.bean.Song" resultMap="BaseResultMap">
+		select * 
+		from song 
+		where singerid = #{singerId}
+	</select>
+
+	<select id="searchSongByName" parameterType="com.music.bean.Song" resultMap="BaseResultMap">
+		select * 
+		from song 
+		where name like #{songName}
+	</select>
+
+	<!-- 根据歌手id获取歌手歌曲 -->
+	 <select id="getSongBySinger" parameterType="int" resultMap="BaseResultMap">
+		select 
+			so.*,
+			si.ID singerId,
+			si.name singerName,
+			si.picture 
+		from song so,singer si 
+		where so.singerid = si.ID 
+		and si.ID = #{singerId}
+	</select> 
+	
+	<select id="getPageSongBySinger" parameterType="int" resultMap="BaseResultMap">
+		SELECT 
+			so.id,
+			so.name,
+			so.lyric,
+			so.mp3,
+			so.count,
+			si.id singerId,
+			si.name singerName
+		FROM song so
+		JOIN singer si ON so.singerId = si.id 
+		WHERE 1 = 1
+		AND si.id = #{singerId}
+		LIMIT #{startNum} , #{endNum}
+	</select>
+	
+	<!-- 获取歌手歌曲笔数 -->
+	<select id="getSongCount" parameterType="int" resultType="int">
+		select 
+			count(1) 
+		from song 
+		where singerId=#{singerId}
+	</select>
+
+	<select id="getSongBySingerByCount" parameterType="int" resultMap="BaseResultMap">
+		select
+			<include refid="Base_Column_List" />
+		from Song 
+		where SINGERID = #{singerId} 
+		order by count desc
+		limit 0,6
+	</select>
+
+
+	<!-- 榜单的热歌榜 -->
+	<select id="getSongByType" parameterType="int" resultMap="View_AllMessageMap">
+		select 
+			va.songid, 
+			va.songname,
+			va.singername,
+			va.songcount,
+			va.songtime,
+			va.singerid,
+			so.lyric lyric,
+			so.mp3 mp3 
+		from view_allmessage va , SONG so
+		<where>
+			so.id = va.songid 
+		</where>	
+		<if test="_parameter  == 1">
+			order by va.songcount desc
+		</if>
+		<if test="_parameter == 2">
+			order by va.uptime desc
+		</if>
+		<if test="_parameter == 3">
+			and va.singertypename='华语'
+		</if>
+		<if test="_parameter == 4">
+			and va.songtypename='民谣'
+		</if>
+		<if test="_parameter == 5">
+			and va.songtypename='网络'
+		</if>
+		<if test="_parameter == 6">
+			and va.songtypename='欧美'
+		</if>
+		<if test="_parameter == 7">
+			and va.songtypename='日韩'
+		</if>
+		limit 0,20
+	</select>
+	
+
+
+	<!-- 根据传入的类别编号获取最新的歌曲信息 -->
+	<select id="getNewSongListBySongType" parameterType="int" resultMap="BaseResultMap">
+		select
+			so.*,
+			si.ID singerId,
+			si.name singerName,
+			si.picture
+		from	
+		<if test="_parameter  == 9">
+			(select * from song order by time desc) so,singer si
+		</if>
+		<if test="_parameter  == 10">
+			(select * from song order by count desc) so,singer si
+		</if>
+
+		<if test="_parameter  != 9 and _parameter  != 10">
+			 (
+			 	select * 
+			 	from song 
+				where song_typeid = #{_parameter} 
+			 	order by time desc
+			 ) so,singer si 
+		</if>  
+		<where>
+			so.singerid = si.id 
+			limit 0,20
+		</where>
+		
+	</select>
+		<!-- 根据歌曲的id查询出该歌手的最火的六首歌的信息 -->
+	<select id="selectSixSongsBySongId" resultType="com.music.bean.View_AllMessage" parameterType="int">
+		SELECT 
+			va1.singerid,
+			va1.songid,
+			va1.songname,
+			va1.singername,
+			va1.picture 
+		FROM view_allmessage va1
+		JOIN view_allmessage va2 ON va1.singerid = va2.singerid
+		AND va2.songid = 2 	
+		limit 0,6
+	</select>
+	
+	
+	<!-- 查询全系统最火的六首歌的信息 -->
+	<select id="selectSixSong" resultType="com.music.bean.View_AllMessage">
+		SELECT 
+			songid,
+			songname,
+			singername,
+			singerid,
+			songcount
+		 FROM view_allmessage
+		 ORDER BY songcount DESC
+		 limit 0,6
+	</select>
+	
+	<!-- 获取歌手的歌曲数量 -->
+	<select id="selectAllSong" resultType="int">
+		select count(1) 
+		from view_allmessage
+		<where>
+		singername in ('周杰伦','张艺兴','林俊杰','Eminem','王嘉尔','吴亦凡','王源','陈奕迅','王俊凯','Camila Cabello') group by singername
+		</where>
+	</select>
+	<!-- 获取歌手歌曲的总点击数 -->
+	<select id="selectAllHits" resultType="int">
+		select SUM(songcount) from view_allmessage
+		<where>
+		singername in ('周杰伦','张艺兴','林俊杰','Eminem','王嘉尔','吴亦凡','王源','陈奕迅','王俊凯','Camila Cabello') group by singername
+		</where>
+	</select>
+	
+	<!-- 获取所有歌手的姓名 -->
+	<select id="selectAllSingerName" resultMap="BaseResultMap" parameterType="string">
+		select name from singer
+	</select>
+	
+	<!-- 插入上传歌曲的信息 -->
+	<insert id="insertSongMsg" parameterType="com.music.bean.Song">
+		insert into song(ID,name,time,lyric,mp3,count,duration,singerid,song_typeid)values(null,#{songName},#{releaseTime},#{lyric},#{mp3},0,'3:24',#{singerid},#{songTypeid})
+	</insert>
+	
+	<!-- 获取所有歌曲类型 -->
+	<select id="selectAllSongType" resultType="com.music.bean.View_AllMessage" parameterType="string">
+		select songtypename from view_allmessage group by songtypename
+	</select>
+
+	
+	<update id="updateSong1" parameterType="com.music.bean.Song">
+		update song set 
+			time = #{releaseTime}
+		where id = #{songId}
+	</update>
+	
+	<select id="findList" resultType="com.music.bean.Song">
+		select
+			id as songId,
+			time as releaseTime
+		from song
+	</select>
+</mapper>
